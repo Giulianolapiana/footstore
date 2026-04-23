@@ -1,0 +1,122 @@
+# productos.http
+# Archivo REST Client para demostrar los endpoints de Productos y ProductoCategoria
+# Usar con la extension "REST Client" de VS Code
+
+@base_url = http://localhost:8000
+
+### ──────────────────────────────────────────────
+### CATEGORIAS (necesarias para las relaciones)
+### ──────────────────────────────────────────────
+
+### Listar todas las categorias
+GET {{base_url}}/categorias/
+Content-Type: application/json
+
+###
+
+### Crear categoria "Pizzas"
+POST {{base_url}}/categorias/
+Content-Type: application/json
+
+{
+  "nombre": "Pizzas",
+  "descripcion": "Pizzas artesanales con masa fresca"
+}
+
+###
+
+### Crear categoria "Hamburguesas"
+POST {{base_url}}/categorias/
+Content-Type: application/json
+
+{
+  "nombre": "Hamburguesas",
+  "descripcion": "Hamburguesas gourmet con ingredientes frescos"
+}
+
+### ──────────────────────────────────────────────
+### PRODUCTOS — CRUD completo
+### ──────────────────────────────────────────────
+
+### GET /productos — Listar todos los productos
+GET {{base_url}}/productos/
+Content-Type: application/json
+
+###
+
+### GET /productos/{id} — Obtener un producto por id
+GET {{base_url}}/productos/1
+Content-Type: application/json
+
+###
+
+### POST /productos — Crear un nuevo producto
+POST {{base_url}}/productos/
+Content-Type: application/json
+
+{
+  "nombre": "Pizza Margherita",
+  "descripcion": "Pizza clasica con tomate y mozzarella",
+  "precio_base": 1500.00,
+  "imagen_url": ["https://ejemplo.com/pizza.jpg"],
+  "disponible": true
+}
+
+###
+
+### POST /productos — Crear otro producto
+POST {{base_url}}/productos/
+Content-Type: application/json
+
+{
+  "nombre": "Hamburguesa Clasica",
+  "descripcion": "Hamburguesa con carne, lechuga y tomate",
+  "precio_base": 1200.00,
+  "imagen_url": ["https://ejemplo.com/hamburguesa.jpg"],
+  "disponible": true
+}
+
+###
+
+### PUT /productos/{id} — Actualizar producto
+PUT {{base_url}}/productos/1
+Content-Type: application/json
+
+{
+  "nombre": "Pizza Margherita Premium",
+  "descripcion": "Pizza clasica con tomate, mozzarella y albahaca fresca",
+  "precio_base": 1800.00,
+  "imagen_url": ["https://ejemplo.com/pizza-premium.jpg"],
+  "disponible": true
+}
+
+###
+
+### DELETE /productos/{id} — Eliminar producto
+DELETE {{base_url}}/productos/2
+Content-Type: application/json
+
+### ──────────────────────────────────────────────
+### PRODUCTO-CATEGORIA — Relaciones
+### ──────────────────────────────────────────────
+
+### GET /producto-categoria — Listar todas las relaciones
+GET {{base_url}}/producto-categoria/
+Content-Type: application/json
+
+###
+
+### POST /producto-categoria — Asociar producto 1 con categoria 1
+POST {{base_url}}/producto-categoria/
+Content-Type: application/json
+
+{
+  "producto_id": 1,
+  "categoria_id": 1
+}
+
+###
+
+### DELETE /producto-categoria/{producto_id}/{categoria_id} — Eliminar relacion
+DELETE {{base_url}}/producto-categoria/1/1
+Content-Type: application/json
