@@ -5,13 +5,15 @@ import { Categoria, CategoriaForm } from '../types/categoria'
 interface CategoriaModalProps {
   isOpen: boolean
   categoriaEditar: Categoria | null
+  categorias: Categoria[]
   onClose: () => void
   onSubmit: (datos: CategoriaForm) => void
 }
 
-const CategoriaModal = ({ isOpen, categoriaEditar, onClose, onSubmit }: CategoriaModalProps) => {
+const CategoriaModal = ({ isOpen, categoriaEditar, categorias, onClose, onSubmit }: CategoriaModalProps) => {
   const [nombre, setNombre]       = useState<string>('')
   const [descripcion, setDescripcion] = useState<string>('')
+  const [parentId, setParentId]   = useState<number | null>(null)
   const [loading, setLoading]     = useState(false)
 
   const modoEdicion = Boolean(categoriaEditar)
@@ -20,9 +22,11 @@ const CategoriaModal = ({ isOpen, categoriaEditar, onClose, onSubmit }: Categori
     if (categoriaEditar) {
       setNombre(categoriaEditar.nombre)
       setDescripcion(categoriaEditar.descripcion)
+      setParentId(categoriaEditar.parent_id ?? null)
     } else {
       setNombre('')
       setDescripcion('')
+      setParentId(null)
     }
     setLoading(false)
   }, [categoriaEditar, isOpen])
@@ -41,11 +45,30 @@ const CategoriaModal = ({ isOpen, categoriaEditar, onClose, onSubmit }: Categori
   const handleSubmit = async () => {
     if (!nombre.trim() || !descripcion.trim()) return
     setLoading(true)
-    await onSubmit({ nombre: nombre.trim(), descripcion: descripcion.trim() })
+    await onSubmit({
+      nombre: nombre.trim(),
+      descripcion: descripcion.trim(),
+      parent_id: parentId,
+    })
     setLoading(false)
   }
 
   if (!isOpen) return null
+
+  // Filtrar: no podemos ser padre de nosotros mismos
+  const posiblesPadres = categorias.filter(c => {
+    if (categoriaEditar && c.id === categoriaEditar.id) return false
+    return true
+  })
+
+  // Construir nombres jerárquicos para el select
+  const getNombreConPadre = (cat: Categoria): string => {
+    if (cat.parent_id) {
+      const padre = categorias.find(c => c.id === cat.parent_id)
+      if (padre) return `${padre.nombre} → ${cat.nombre}`
+    }
+    return cat.nombre
+  }
 
   const isValid = nombre.trim().length > 0 && descripcion.trim().length > 0
 
@@ -118,6 +141,28 @@ const CategoriaModal = ({ isOpen, categoriaEditar, onClose, onSubmit }: Categori
                 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400
                 transition-shadow duration-150"
             />
+          </div>
+
+          {/* Selector de categoría padre */}
+          <div>
+            <label htmlFor="cat-parent" className="block text-sm font-medium text-slate-700 mb-1.5">
+              Categoría padre <span className="text-slate-400 text-xs">(opcional — dejar vacío para categoría raíz)</span>
+            </label>
+            <select
+              id="cat-parent"
+              value={parentId ?? ''}
+              onChange={(e) => setParentId(e.target.value ? parseInt(e.target.value) : null)}
+              className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800
+                focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400
+                transition-shadow duration-150 bg-white"
+            >
+              <option value="">— Sin padre (categoría raíz) —</option>
+              {posiblesPadres.map(c => (
+                <option key={c.id} value={c.id}>
+                  {getNombreConPadre(c)}
+                </option>
+              ))}
+            </select>
           </div>
 
         </div>

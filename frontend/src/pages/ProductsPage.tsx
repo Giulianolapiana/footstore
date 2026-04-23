@@ -1,10 +1,14 @@
 // src/pages/ProductsPage.tsx
 import { useState, useEffect } from 'react'
 import { Producto, ProductoForm } from '../types/producto'
+import { Categoria } from '../types/categoria'
+import { Ingrediente } from '../types/ingrediente'
 import ProductoList from '../components/ProductoList'
 import ProductoModal from '../components/ProductoModal'
 
 const API_URL = 'http://localhost:8000/productos'
+const CAT_API = 'http://localhost:8000/categorias'
+const ING_API = 'http://localhost:8000/ingredientes'
 
 // PageShell reutilizable (mismo patrón que CategoriasPage)
 interface PageShellProps {
@@ -41,6 +45,8 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
 
 const ProductsPage = () => {
   const [productos, setProductos]             = useState<Producto[]>([])
+  const [categorias, setCategorias]           = useState<Categoria[]>([])
+  const [ingredientes, setIngredientes]       = useState<Ingrediente[]>([])
   const [modalOpen, setModalOpen]             = useState(false)
   const [productoEditar, setProductoEditar]   = useState<Producto | null>(null)
   const [error, setError]                     = useState<string | null>(null)
@@ -55,7 +61,27 @@ const ProductsPage = () => {
     }
   }
 
-  useEffect(() => { fetchProductos() }, [])
+  const fetchCategorias = async () => {
+    try {
+      const res = await fetch(`${CAT_API}/`)
+      if (!res.ok) throw new Error()
+      setCategorias(await res.json())
+    } catch { /* silencioso — se muestra alerta en modal */ }
+  }
+
+  const fetchIngredientes = async () => {
+    try {
+      const res = await fetch(`${ING_API}/`)
+      if (!res.ok) throw new Error()
+      setIngredientes(await res.json())
+    } catch { /* silencioso */ }
+  }
+
+  useEffect(() => {
+    fetchProductos()
+    fetchCategorias()
+    fetchIngredientes()
+  }, [])
 
   const handleSubmit = async (datos: ProductoForm) => {
     try {
@@ -63,20 +89,26 @@ const ProductsPage = () => {
         const res = await fetch(`${API_URL}/${productoEditar.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => null)
+          throw new Error(errBody?.detail || 'Error al guardar')
+        }
         const actualizado: Producto = await res.json()
         setProductos((prev) => prev.map((p) => (p.id === actualizado.id ? actualizado : p)))
       } else {
         const res = await fetch(`${API_URL}/`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => null)
+          throw new Error(errBody?.detail || 'Error al crear')
+        }
         const nuevo: Producto = await res.json()
         setProductos((prev) => [...prev, nuevo])
       }
       setModalOpen(false); setProductoEditar(null)
-    } catch {
-      setError('Error al guardar el producto.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al guardar el producto.')
     }
   }
 
@@ -91,7 +123,13 @@ const ProductsPage = () => {
   }
 
   const handleEditar = (p: Producto) => { setProductoEditar(p); setModalOpen(true) }
-  const handleNuevo  = () => { setProductoEditar(null); setModalOpen(true) }
+  const handleNuevo  = () => {
+    setProductoEditar(null)
+    // Recargar categorías e ingredientes frescos al abrir modal
+    fetchCategorias()
+    fetchIngredientes()
+    setModalOpen(true)
+  }
 
   return (
     <>
@@ -101,6 +139,8 @@ const ProductsPage = () => {
       <ProductoModal
         isOpen={modalOpen}
         productoEditar={productoEditar}
+        categorias={categorias}
+        ingredientes={ingredientes}
         onClose={() => { setModalOpen(false); setProductoEditar(null) }}
         onSubmit={handleSubmit}
       />

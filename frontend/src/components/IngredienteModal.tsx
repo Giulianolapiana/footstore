@@ -14,17 +14,14 @@ interface IngredienteModalProps {
 const IngredienteModal = ({ isOpen, ingredienteEditar, onClose, onSubmit }: IngredienteModalProps) => {
   const [nombre, setNombre] = useState<string>('')
   const [descripcion, setDescripcion] = useState<string>('')
-  const [esAlergeno, setEsAlergeno] = useState<boolean>(false)
 
   useEffect(() => {
     if (ingredienteEditar) {
       setNombre(ingredienteEditar.nombre)
       setDescripcion(ingredienteEditar.descripcion)
-      setEsAlergeno(ingredienteEditar.es_alergeno)
     } else {
       setNombre('')
       setDescripcion('')
-      setEsAlergeno(false)
     }
   }, [ingredienteEditar, isOpen])
 
@@ -33,7 +30,6 @@ const IngredienteModal = ({ isOpen, ingredienteEditar, onClose, onSubmit }: Ingr
     onSubmit({
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
-      es_alergeno: esAlergeno,
     })
   }
 
@@ -72,20 +68,7 @@ const IngredienteModal = ({ isOpen, ingredienteEditar, onClose, onSubmit }: Ingr
           />
         </div>
 
-        <div className="mb-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={esAlergeno}
-              onChange={(e) => setEsAlergeno(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-gray-700">Es alérgeno</span>
-          </label>
-          <p className="text-xs text-gray-400 mt-1 ml-6">
-            Marcá esta opción si el ingrediente puede causar reacciones alérgicas.
-          </p>
-        </div>
+
 
         <div className="flex justify-end gap-3">
           <button

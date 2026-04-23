@@ -3,16 +3,14 @@
 
 
 class Ingrediente:
-    def __init__(self, id: int, nombre: str, descripcion: str, es_alergeno: bool):
+    def __init__(self, id: int, nombre: str, descripcion: str):
         self.id = id
         self.nombre = nombre
         self.descripcion = descripcion
-        self.es_alergeno = es_alergeno
 
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "nombre": self.nombre,
             "descripcion": self.descripcion,
-            "es_alergeno": self.es_alergeno,
         }

@@ -35,6 +35,15 @@ def sync_catalog_schema() -> None:
         "ALTER TABLE producto DROP COLUMN IF EXISTS tiempo_prep_min",
         "ALTER TABLE productoingrediente ALTER COLUMN es_removible SET DEFAULT false",
         "UPDATE productoingrediente SET es_removible = false WHERE es_removible IS NULL",
+        # Migración: agregar categoria_id directo a producto (1:N)
+        "ALTER TABLE producto ADD COLUMN IF NOT EXISTS categoria_id INTEGER",
+        "UPDATE producto SET categoria_id = (SELECT id FROM categoria LIMIT 1) WHERE categoria_id IS NULL",
+        "ALTER TABLE producto ALTER COLUMN categoria_id SET NOT NULL",
+        """DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_producto_categoria') THEN
+                ALTER TABLE producto ADD CONSTRAINT fk_producto_categoria FOREIGN KEY (categoria_id) REFERENCES categoria(id);
+            END IF;
+        END $$""",
     ]
 
     with engine.begin() as connection:

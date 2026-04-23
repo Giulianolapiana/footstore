@@ -1,5 +1,5 @@
 # app/producto/router.py
-# Endpoints REST para el CRUD de Productos, ProductoCategoria y ProductoIngrediente
+# Endpoints REST para el CRUD de Productos y ProductoIngrediente
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
@@ -9,8 +9,6 @@ from app.producto.schema import (
     ProductoCreate,
     ProductoUpdate,
     ProductoResponse,
-    ProductoCategoriaCreate,
-    ProductoCategoriaResponse,
     ProductoIngredienteCreate,
     ProductoIngredienteResponse,
 )
@@ -20,11 +18,6 @@ from app.core.database import get_session
 router = APIRouter(
     prefix="/productos",
     tags=["Productos"],
-)
-
-router_pc = APIRouter(
-    prefix="/producto-categoria",
-    tags=["ProductoCategoria"],
 )
 
 router_pi = APIRouter(
@@ -55,8 +48,14 @@ def obtener_producto(producto_id: int, session: Session = Depends(get_session)):
 
 @router.post("/", response_model=ProductoResponse, status_code=status.HTTP_201_CREATED)
 def crear_producto(data: ProductoCreate, session: Session = Depends(get_session)):
-    """POST /productos — Crea un nuevo producto"""
-    return service.create(session, data)
+    """POST /productos — Crea un nuevo producto (requiere categoria_id válido)"""
+    resultado = service.create(session, data)
+    if not resultado:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"La categoría con id {data.categoria_id} no existe o fue eliminada. Un producto debe tener una categoría válida."
+        )
+    return resultado
 
 
 @router.put("/{producto_id}", response_model=ProductoResponse)
@@ -66,7 +65,7 @@ def actualizar_producto(producto_id: int, data: ProductoUpdate, session: Session
     if not producto:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Producto con id {producto_id} no encontrado"
+            detail=f"Producto con id {producto_id} no encontrado o categoría inválida"
         )
     return producto
 
@@ -79,37 +78,6 @@ def eliminar_producto(producto_id: int, session: Session = Depends(get_session))
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Producto con id {producto_id} no encontrado"
-        )
-
-
-# ── ProductoCategoria ─────────────────────────────────────────────────────────
-
-@router_pc.get("/", response_model=List[ProductoCategoriaResponse])
-def listar_relaciones(session: Session = Depends(get_session)):
-    """GET /producto-categoria — Lista todas las relaciones"""
-    return service.get_all_relaciones(session)
-
-
-@router_pc.post("/", response_model=ProductoCategoriaResponse, status_code=status.HTTP_201_CREATED)
-def crear_relacion(data: ProductoCategoriaCreate, session: Session = Depends(get_session)):
-    """POST /producto-categoria — Asocia un producto con una categoria"""
-    relacion = service.create_relacion(session, data)
-    if not relacion:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Producto o Categoria no existen, o la relacion ya existe"
-        )
-    return relacion
-
-
-@router_pc.delete("/{producto_id}/{categoria_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_relacion(producto_id: int, categoria_id: int, session: Session = Depends(get_session)):
-    """DELETE /producto-categoria/{producto_id}/{categoria_id} — Elimina una relacion"""
-    eliminada = service.delete_relacion(session, producto_id, categoria_id)
-    if not eliminada:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Relacion no encontrada"
         )
 
 

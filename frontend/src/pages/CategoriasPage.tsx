@@ -149,6 +149,7 @@ const CategoriasPage = () => {
       <CategoriaModal
         isOpen={modalAbierto}
         categoriaEditar={categoriaSeleccionada}
+        categorias={categorias}
         onClose={cerrarModal}
         onSubmit={handleSubmit}
       />

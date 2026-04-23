@@ -4,15 +4,23 @@ import { Categoria } from '../types/categoria'
 interface CategoriaCardProps {
   numero: number
   categoria: Categoria
+  nivel: number
   onEditar: (categoria: Categoria) => void
   onEliminar: (id: number) => void
 }
 
-const CategoriaCard = ({ numero, categoria, onEditar, onEliminar }: CategoriaCardProps) => {
+const CategoriaCard = ({ numero, categoria, nivel, onEditar, onEliminar }: CategoriaCardProps) => {
   return (
     <tr className="border-b border-slate-100 hover:bg-orange-50/40 transition-colors duration-150 group">
       <td className="px-5 py-3.5 text-slate-400 text-sm tabular-nums">{numero}</td>
-      <td className="px-5 py-3.5 font-semibold text-slate-800">{categoria.nombre}</td>
+      <td className="px-5 py-3.5 font-semibold text-slate-800">
+        <span style={{ paddingLeft: `${nivel * 24}px` }} className="inline-flex items-center gap-1.5">
+          {nivel > 0 && (
+            <span className="text-slate-400 text-xs">↳</span>
+          )}
+          {categoria.nombre}
+        </span>
+      </td>
       <td className="px-5 py-3.5 text-slate-500 text-sm">{categoria.descripcion || '—'}</td>
       <td className="px-5 py-3.5 text-right">
         <div className="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity duration-150">

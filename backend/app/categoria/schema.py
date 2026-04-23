@@ -25,7 +25,7 @@ class CategoriaResponse(BaseModel):
     """Schema para la respuesta al cliente (incluye id)"""
     id: int
     nombre: str
-    descripcion: str
+    descripcion: Optional[str] = ""
     parent_id: Optional[int] = None
     imagen_url: Optional[str] = None
 

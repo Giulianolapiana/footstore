@@ -32,7 +32,6 @@ const IngredienteList = ({ ingredientes, onEditar, onEliminar }: IngredienteList
             <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400 w-14">#</th>
             <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Nombre</th>
             <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Descripción</th>
-            <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">Alérgeno</th>
             <th scope="col" className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-slate-400 text-right">Acciones</th>
           </tr>
         </thead>
@@ -42,21 +41,6 @@ const IngredienteList = ({ ingredientes, onEditar, onEliminar }: IngredienteList
               <td className="px-5 py-3.5 text-slate-400 text-sm tabular-nums">{index + 1}</td>
               <td className="px-5 py-3.5 font-semibold text-slate-800">{ingrediente.nombre}</td>
               <td className="px-5 py-3.5 text-slate-500 text-sm">{ingrediente.descripcion || '—'}</td>
-              <td className="px-5 py-3.5 text-center">
-                {ingrediente.es_alergeno ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                    {/* Warning icon SVG */}
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                      <path d="M8 1a.5.5 0 0 1 .437.257l7 12A.5.5 0 0 1 15 14H1a.5.5 0 0 1-.437-.743l7-12A.5.5 0 0 1 8 1zm0 4a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 1 0v-3A.5.5 0 0 0 8 5zm0 6a.75.75 0 1 0 0 1.5A.75.75 0 0 0 8 11z"/>
-                    </svg>
-                    Alérgeno
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                    Sin riesgo
-                  </span>
-                )}
-              </td>
               <td className="px-5 py-3.5 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity duration-150">
                   <button

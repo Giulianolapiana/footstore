@@ -1,3 +1,8 @@
 .pdf
 .svg
 .pdf
+# Ignorar el diagrama SVG específico
+food_store_erd_v5.svg
+
+# Ignorar todos los archivos PDF (recomendado para que no se filtren parciales)
+*.pdf

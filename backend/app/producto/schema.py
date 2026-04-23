@@ -2,7 +2,7 @@
 # Schemas Pydantic para Producto, ProductoCategoria y ProductoIngrediente
 
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 # ── Producto ──────────────────────────────────────────────────────────────────
@@ -12,9 +12,11 @@ class ProductoCreate(BaseModel):
     nombre: str
     descripcion: str
     precio_base: float
+    categoria_id: int
     imagenes_url: List[str] = []
     stock_cantidad: int = 0
     disponible: bool = True
+    ingrediente_ids: List[int] = []
 
 
 class ProductoUpdate(BaseModel):
@@ -22,9 +24,29 @@ class ProductoUpdate(BaseModel):
     nombre: str
     descripcion: str
     precio_base: float
+    categoria_id: int
     imagenes_url: List[str] = []
     stock_cantidad: int = 0
     disponible: bool = True
+    ingrediente_ids: List[int] = []
+
+
+class CategoriaInfo(BaseModel):
+    """Info reducida de categoría para embeder en respuesta de producto"""
+    id: int
+    nombre: str
+
+    class Config:
+        from_attributes = True
+
+
+class IngredienteInfo(BaseModel):
+    """Info reducida de ingrediente para embeder en respuesta de producto"""
+    id: int
+    nombre: str
+
+    class Config:
+        from_attributes = True
 
 
 class ProductoResponse(BaseModel):
@@ -33,28 +55,13 @@ class ProductoResponse(BaseModel):
     nombre: str
     descripcion: str
     precio_base: float
+    categoria_id: int
+    categoria_nombre: str = ""
     imagenes_url: List[str]
     stock_cantidad: int
     disponible: bool
-
-    class Config:
-        from_attributes = True
-
-
-# ── ProductoCategoria ─────────────────────────────────────────────────────────
-
-class ProductoCategoriaCreate(BaseModel):
-    """Schema para asociar un producto con una categoria"""
-    producto_id: int
-    categoria_id: int
-    es_principal: bool = False
-
-
-class ProductoCategoriaResponse(BaseModel):
-    """Schema de respuesta para la relacion producto-categoria"""
-    producto_id: int
-    categoria_id: int
-    es_principal: bool
+    categorias: Optional[CategoriaInfo] = None
+    ingredientes: List[IngredienteInfo] = []
 
     class Config:
         from_attributes = True

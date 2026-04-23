@@ -15,6 +15,49 @@ const EmptyIcon = () => (
   </svg>
 )
 
+/**
+ * Ordena las categorías en orden jerárquico:
+ * primero las raíces (sin parent_id), debajo sus hijas indentadas.
+ */
+function buildTreeOrder(categorias: Categoria[]): { categoria: Categoria; nivel: number }[] {
+  const result: { categoria: Categoria; nivel: number }[] = []
+
+  // Raíces: categorías sin padre
+  const raices = categorias.filter(c => !c.parent_id)
+  // Hijas agrupadas por parent_id
+  const hijasPorPadre = new Map<number, Categoria[]>()
+  for (const c of categorias) {
+    if (c.parent_id) {
+      const lista = hijasPorPadre.get(c.parent_id) || []
+      lista.push(c)
+      hijasPorPadre.set(c.parent_id, lista)
+    }
+  }
+
+  // Recorrer recursivamente
+  function agregar(cat: Categoria, nivel: number) {
+    result.push({ categoria: cat, nivel })
+    const hijas = hijasPorPadre.get(cat.id) || []
+    for (const hija of hijas) {
+      agregar(hija, nivel + 1)
+    }
+  }
+
+  for (const raiz of raices) {
+    agregar(raiz, 0)
+  }
+
+  // Categorías huérfanas (parent_id apunta a una categoría que no existe)
+  const idsEnResult = new Set(result.map(r => r.categoria.id))
+  for (const c of categorias) {
+    if (!idsEnResult.has(c.id)) {
+      result.push({ categoria: c, nivel: 0 })
+    }
+  }
+
+  return result
+}
+
 const CategoriaList = ({ categorias, onEditar, onEliminar }: CategoriaListProps) => {
   if (categorias.length === 0) {
     return (
@@ -25,6 +68,8 @@ const CategoriaList = ({ categorias, onEditar, onEliminar }: CategoriaListProps)
       </div>
     )
   }
+
+  const arbol = buildTreeOrder(categorias)
 
   return (
     <div className="overflow-x-auto">
@@ -38,11 +83,12 @@ const CategoriaList = ({ categorias, onEditar, onEliminar }: CategoriaListProps)
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-50">
-          {categorias.map((categoria, index) => (
+          {arbol.map(({ categoria, nivel }, index) => (
             <CategoriaCard
               key={categoria.id}
               numero={index + 1}
               categoria={categoria}
+              nivel={nivel}
               onEditar={onEditar}
               onEliminar={onEliminar}
             />

@@ -8,7 +8,6 @@ from app.categoria.router import router as categoria_router
 from app.ingrediente.router import router as ingrediente_router
 from app.producto.router import (
     router as producto_router,
-    router_pc as producto_categoria_router,
     router_pi as producto_ingrediente_router,
 )
 
@@ -41,7 +40,6 @@ app.add_middleware(
 app.include_router(categoria_router)
 app.include_router(ingrediente_router)
 app.include_router(producto_router)
-app.include_router(producto_categoria_router)
 app.include_router(producto_ingrediente_router)
 
 
