@@ -6,9 +6,10 @@ import { Ingrediente } from '../types/ingrediente'
 import ProductoList from '../components/ProductoList'
 import ProductoModal from '../components/ProductoModal'
 
-const API_URL = 'http://localhost:8000/productos'
-const CAT_API = 'http://localhost:8000/categorias'
-const ING_API = 'http://localhost:8000/ingredientes'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_URL = `${API_BASE}/productos`
+const CAT_API = `${API_BASE}/categorias`
+const ING_API = `${API_BASE}/ingredientes`
 
 // PageShell reutilizable (mismo patrón que CategoriasPage)
 interface PageShellProps {

@@ -1,9 +1,13 @@
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship, Column
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy import String
 from app.models.links import ProductoIngrediente
+
+if TYPE_CHECKING:
+    from app.models.categoria import Categoria
+    from app.models.ingrediente import Ingrediente
 
 class Producto(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

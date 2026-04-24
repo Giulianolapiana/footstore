@@ -4,7 +4,7 @@ import { Ingrediente, IngredienteForm } from '../types/ingrediente'
 import IngredienteList from '../components/IngredienteList'
 import IngredienteModal from '../components/IngredienteModal'
 
-const API_URL = 'http://localhost:8000/ingredientes'
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/ingredientes`
 
 // PageShell reutilizable (mismo patrón que CategoriasPage)
 interface PageShellProps {

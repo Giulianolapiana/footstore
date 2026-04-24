@@ -1,8 +1,12 @@
 # app/main.py
 # Punto de entrada de la aplicacion FastAPI
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.categoria.router import router as categoria_router
 from app.ingrediente.router import router as ingrediente_router
@@ -27,10 +31,13 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# Permite que el frontend en localhost:5173 consuma la API
+# Permite que el frontend consuma la API según las rutas configuradas en el .env
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

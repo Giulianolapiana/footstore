@@ -1,6 +1,7 @@
 .pdf
 .svg
 .pdf
+.env
 # Ignorar el diagrama SVG específico
 food_store_erd_v5.svg
 

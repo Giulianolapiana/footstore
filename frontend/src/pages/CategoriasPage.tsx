@@ -3,7 +3,7 @@ import { Categoria, CategoriaForm } from '../types/categoria'
 import CategoriaList from '../components/CategoriaList'
 import CategoriaModal from '../components/CategoriaModal'
 
-const API_URL = 'http://localhost:8000/categorias'
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/categorias`
 
 // ── Layout compartido de página ─────────────────────────────────────────────
 interface PageShellProps {
