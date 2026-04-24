@@ -21,14 +21,14 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
       </div>
     )}
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{title}</h1>
           {count > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 tabular-nums">{count}</span>}
         </div>
         <button
           onClick={onAdd}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
+          className="w-full sm:w-auto inline-flex justify-center items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M7 1v12M1 7h12" /></svg>
           {addLabel}
