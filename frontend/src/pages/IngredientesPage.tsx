@@ -4,15 +4,20 @@ import { Ingrediente, IngredienteForm } from '../types/ingrediente'
 import IngredienteList from '../components/IngredienteList'
 import IngredienteModal from '../components/IngredienteModal'
 
+// URL base para los endpoints de ingredientes
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/ingredientes`
 
-// PageShell reutilizable (mismo patrón que CategoriasPage)
+/**
+ * PageShell: Contenedor reutilizable para la estructura de la pagina.
+ * Incluye el encabezado, el contador de elementos y el manejo de errores.
+ */
 interface PageShellProps {
   title: string; count: number; onAdd: () => void; addLabel: string
   children: React.ReactNode; error: string | null; onDismissError: () => void
 }
 const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissError }: PageShellProps) => (
   <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    {/* Visualizacion de errores si existen */}
     {error && (
       <div role="alert" aria-live="polite" className="mb-5 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm animate-fade-in">
         <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1a.5.5 0 0 1 .437.257l7 12A.5.5 0 0 1 15 14H1a.5.5 0 0 1-.437-.743l7-12A.5.5 0 0 1 8 1zm0 4a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 1 0v-3A.5.5 0 0 0 8 5zm0 6a.75.75 0 1 0 0 1.5A.75.75 0 0 0 8 11z" /></svg>
@@ -24,6 +29,7 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
       <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{title}</h1>
+          {/* Badge informativo del total de ingredientes */}
           {count > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 tabular-nums">{count}</span>}
         </div>
         <button
@@ -39,12 +45,16 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
   </main>
 )
 
+/**
+ * IngredientesPage: Pagina principal para el CRUD de ingredientes.
+ */
 const IngredientesPage = () => {
   const [ingredientes, setIngredientes]         = useState<Ingrediente[]>([])
   const [modalOpen, setModalOpen]               = useState(false)
   const [ingredienteEditar, setIngredienteEditar] = useState<Ingrediente | null>(null)
   const [error, setError]                       = useState<string | null>(null)
 
+  // Obtiene ingredientes desde la API
   const fetchIngredientes = async () => {
     try {
       const res = await fetch(`${API_URL}/`)
@@ -57,9 +67,11 @@ const IngredientesPage = () => {
 
   useEffect(() => { fetchIngredientes() }, [])
 
+  // Maneja tanto el envio de creacion como el de edicion
   const handleSubmit = async (datos: IngredienteForm) => {
     try {
       if (ingredienteEditar) {
+        // Logica de actualizacion (PUT)
         const res = await fetch(`${API_URL}/${ingredienteEditar.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
@@ -67,6 +79,7 @@ const IngredientesPage = () => {
         const actualizado: Ingrediente = await res.json()
         setIngredientes((prev) => prev.map((i) => (i.id === actualizado.id ? actualizado : i)))
       } else {
+        // Logica de creacion (POST)
         const res = await fetch(`${API_URL}/`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
@@ -80,6 +93,7 @@ const IngredientesPage = () => {
     }
   }
 
+  // Elimina un ingrediente logicamente
   const handleEliminar = async (id: number) => {
     if (!window.confirm('¿Estás seguro de eliminar este ingrediente?')) return
     try {
@@ -90,6 +104,7 @@ const IngredientesPage = () => {
     }
   }
 
+  // Helpers para control de modal
   const handleEditar = (i: Ingrediente) => { setIngredienteEditar(i); setModalOpen(true) }
   const handleNuevo  = () => { setIngredienteEditar(null); setModalOpen(true) }
 

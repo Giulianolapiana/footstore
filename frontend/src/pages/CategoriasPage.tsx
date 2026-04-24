@@ -3,9 +3,10 @@ import { Categoria, CategoriaForm } from '../types/categoria'
 import CategoriaList from '../components/CategoriaList'
 import CategoriaModal from '../components/CategoriaModal'
 
+// URL base de la API para categorias
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/categorias`
 
-// ── Layout compartido de página ─────────────────────────────────────────────
+
 interface PageShellProps {
   title: string
   count: number
@@ -15,9 +16,10 @@ interface PageShellProps {
   error: string | null
   onDismissError: () => void
 }
+
 const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissError }: PageShellProps) => (
   <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-    {/* Alerta de error */}
+    {/* Banner de alerta para errores globales en la pagina */}
     {error && (
       <div
         role="alert"
@@ -32,18 +34,20 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
       </div>
     )}
 
-    {/* Card principal */}
+    {/* Contenedor principal estilizado con borde y sombra suave */}
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      {/* Header del panel */}
+      {/* Encabezado de la seccion */}
       <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{title}</h1>
+          {/* Badge que muestra el total de elementos cargados */}
           {count > 0 && (
             <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 tabular-nums">
               {count}
             </span>
           )}
         </div>
+        {/* Boton principal de accion (crear) */}
         <button
           onClick={onAdd}
           className="w-full sm:w-auto inline-flex justify-center items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2"
@@ -55,21 +59,27 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
         </button>
       </div>
 
-      {/* Contenido */}
+      {/* Area de contenido donde se renderiza el listado u otros componentes hijos */}
       <div>{children}</div>
     </div>
   </main>
 )
 
-// ── CategoriasPage ──────────────────────────────────────────────────────────
+/**
+ * CategoriasPage: Pagina principal para administrar las categorias de productos.
+ * Maneja el estado local de las categorias y la comunicacion con la API.
+ */
 const CategoriasPage = () => {
+  // Estados para datos, visibilidad del modal y manejo de errores
   const [categorias, setCategorias]               = useState<Categoria[]>([])
   const [modalAbierto, setModalAbierto]           = useState<boolean>(false)
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null)
   const [error, setError]                         = useState<string | null>(null)
 
+  // Carga inicial de datos al montar el componente
   useEffect(() => { cargarCategorias() }, [])
 
+  // Obtiene el listado de categorias desde el backend GET
   const cargarCategorias = async () => {
     try {
       const res = await fetch(`${API_URL}/`)
@@ -80,6 +90,7 @@ const CategoriasPage = () => {
     }
   }
 
+  // Envia una nueva categoria al servidor POST
   const handleCreate = async (datos: CategoriaForm) => {
     try {
       const res = await fetch(`${API_URL}/`, {
@@ -89,6 +100,7 @@ const CategoriasPage = () => {
       })
       if (!res.ok) throw new Error()
       const nueva: Categoria = await res.json()
+      // Actualizacion optimista del estado local
       setCategorias((prev) => [...prev, nueva])
       cerrarModal()
     } catch {
@@ -96,6 +108,7 @@ const CategoriasPage = () => {
     }
   }
 
+  // Actualiza una categoria existente en el servidor PUT
   const handleUpdate = async (datos: CategoriaForm) => {
     if (!categoriaSeleccionada) return
     try {
@@ -106,6 +119,7 @@ const CategoriasPage = () => {
       })
       if (!res.ok) throw new Error()
       const actualizada: Categoria = await res.json()
+      // Reemplaza la categoria editada en la lista local
       setCategorias((prev) => prev.map((c) => (c.id === actualizada.id ? actualizada : c)))
       cerrarModal()
     } catch {
@@ -113,26 +127,31 @@ const CategoriasPage = () => {
     }
   }
 
+  // Ejecuta la eliminacion logica (soft delete) de una categoria
   const handleDelete = async (id: number) => {
     if (!window.confirm('¿Estás seguro de que querés eliminar esta categoría?')) return
     try {
       const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
+      // Remueve el elemento de la lista local
       setCategorias((prev) => prev.filter((c) => c.id !== id))
     } catch {
       setError('Error al eliminar la categoría.')
     }
   }
 
+  // Decide si disparar creacion o actualizacion segun si hay una categoria seleccionada
   const handleSubmit = (datos: CategoriaForm) =>
     categoriaSeleccionada ? handleUpdate(datos) : handleCreate(datos)
 
+  // Funciones auxiliares para el control del modal
   const abrirModalCrear = () => { setCategoriaSeleccionada(null); setModalAbierto(true) }
   const abrirModalEditar = (c: Categoria) => { setCategoriaSeleccionada(c); setModalAbierto(true) }
   const cerrarModal = () => { setModalAbierto(false); setCategoriaSeleccionada(null) }
 
   return (
     <>
+      {/* Contenedor visual de la pagina */}
       <PageShell
         title="Categorías"
         count={categorias.length}
@@ -141,9 +160,11 @@ const CategoriasPage = () => {
         error={error}
         onDismissError={() => setError(null)}
       >
+        {/* Listado de categorias */}
         <CategoriaList categorias={categorias} onEditar={abrirModalEditar} onEliminar={handleDelete} />
       </PageShell>
 
+      {/* Modal para crear o editar categorias */}
       <CategoriaModal
         isOpen={modalAbierto}
         categoriaEditar={categoriaSeleccionada}

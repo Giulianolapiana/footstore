@@ -1,5 +1,5 @@
 # app/producto/service.py
-# Logica de negocio para el CRUD de Productos y ProductoIngrediente
+# Capa de Logica de Negocio para el modulo de Productos
 
 from typing import List, Optional
 from sqlmodel import Session
@@ -24,7 +24,10 @@ from app.producto.unit_of_work import ProductoUnitOfWork
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _build_response(p: Producto) -> ProductoResponse:
-    """Construye un ProductoResponse a partir de un modelo ORM cargado."""
+    """
+    Helper para transformar un objeto del modelo Producto (ORM) a un schema de respuesta (Pydantic).
+    Se encarga de mapear las relaciones de categoria e ingredientes.
+    """
     cat_info = None
     cat_nombre = ""
     if p.categoria:
@@ -54,15 +57,21 @@ def _build_response(p: Producto) -> ProductoResponse:
 # ── ProductoService ───────────────────────────────────────────────────────────
 
 class ProductoService:
+    """
+    Clase de servicio que orquestra todas las operaciones relacionadas con Productos.
+    Utiliza el Unit of Work para garantizar atomicidad en las transacciones.
+    """
     def __init__(self, session: Session) -> None:
         self._session = session
 
     def get_all(self) -> List[ProductoResponse]:
+        """Obtiene todos los productos activos y los transforma a DTOs de respuesta"""
         with ProductoUnitOfWork(self._session) as uow:
             productos = uow.productos.get_active()
             return [_build_response(p) for p in productos]
 
     def get_by_id(self, producto_id: int) -> Optional[ProductoResponse]:
+        """Busca un producto por ID y devuelve su representacion de respuesta"""
         with ProductoUnitOfWork(self._session) as uow:
             p = uow.productos.get_by_id(producto_id)
             if p and p.deleted_at is None:
@@ -70,6 +79,7 @@ class ProductoService:
             return None
 
     def create(self, data: ProductoCreate) -> Optional[ProductoResponse]:
+        """Crea un nuevo producto validando la categoria e insertando relaciones con ingredientes"""
         with ProductoUnitOfWork(self._session) as uow:
             # Validar que la categoría existe y está activa
             cat = uow.categorias.get_by_id(data.categoria_id)
@@ -89,27 +99,26 @@ class ProductoService:
             # Como SQLModel necesita el ID para las relaciones, hacemos flush manual
             uow.productos.session.flush()
 
-            # Crear relaciones con ingredientes
+            # Crear relaciones con ingredientes (tabla muchos a muchos)
             for ing_id in data.ingrediente_ids:
                 ing = uow.ingredientes.get_by_id(ing_id)
                 if ing:
                     rel = ProductoIngrediente(producto_id=db_obj.id, ingrediente_id=ing_id)
                     uow.producto_ingredientes.add(rel)
 
-            # commit handled by __exit__
-            # we need to return after uow finishes or flush and refresh to return
-            # Doing a flush so we can return the built response
+            # El commit se ejecuta automaticamente al salir del bloque 'with' (Unit of Work)
             uow.productos.session.flush()
             uow.productos.session.refresh(db_obj)
             return _build_response(db_obj)
 
     def update(self, producto_id: int, data: ProductoUpdate) -> Optional[ProductoResponse]:
+        """Actualiza un producto y sincroniza sus ingredientes (borra anteriores e inserta nuevos)"""
         with ProductoUnitOfWork(self._session) as uow:
             p = uow.productos.get_by_id(producto_id)
             if not p or p.deleted_at is not None:
                 return None
 
-            # Validar que la categoría existe
+            # Validar que la categoría nueva existe
             cat = uow.categorias.get_by_id(data.categoria_id)
             if not cat or cat.deleted_at is not None:
                 return None
@@ -123,7 +132,7 @@ class ProductoService:
             p.stock_cantidad = data.stock_cantidad
             p.updated_at = datetime.now(timezone.utc)
 
-            # Sincronizar ingredientes: borrar viejos, crear nuevos
+            # Sincronizar ingredientes: borrar viejos y crear nuevos
             old_rels = uow.producto_ingredientes.get_by_producto(producto_id)
             for r in old_rels:
                 uow.producto_ingredientes.delete(r)
@@ -140,6 +149,7 @@ class ProductoService:
             return _build_response(p)
 
     def delete(self, producto_id: int) -> bool:
+        """Realiza el borrado logico del producto (soft delete)"""
         with ProductoUnitOfWork(self._session) as uow:
             p = uow.productos.get_by_id(producto_id)
             if not p or p.deleted_at is not None:
@@ -149,14 +159,16 @@ class ProductoService:
             uow.productos.add(p)
             return True
 
-    # ── ProductoIngrediente ───────────────────────────────────────────────────────
+    # ── ProductoIngrediente (Manejo manual de relaciones) ───────────────────────────
 
     def get_all_ingrediente_relaciones(self) -> List[ProductoIngredienteResponse]:
+        """Lista todas las relaciones de ingredientes existentes"""
         with ProductoUnitOfWork(self._session) as uow:
             relaciones = uow.producto_ingredientes.get_all()
             return [ProductoIngredienteResponse(**r.model_dump()) for r in relaciones]
 
     def create_ingrediente_relacion(self, data: ProductoIngredienteCreate) -> Optional[ProductoIngredienteResponse]:
+        """Crea una relacion especifica producto-ingrediente de forma manual"""
         with ProductoUnitOfWork(self._session) as uow:
             p = uow.productos.get_by_id(data.producto_id)
             i = uow.ingredientes.get_by_id(data.ingrediente_id)
@@ -180,6 +192,7 @@ class ProductoService:
             return ProductoIngredienteResponse(**relacion.model_dump())
 
     def delete_ingrediente_relacion(self, producto_id: int, ingrediente_id: int) -> bool:
+        """Elimina una relacion producto-ingrediente especifica"""
         with ProductoUnitOfWork(self._session) as uow:
             r = uow.producto_ingredientes.get_by_producto_and_ingrediente(producto_id, ingrediente_id)
             if not r:

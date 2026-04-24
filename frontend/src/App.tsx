@@ -13,7 +13,7 @@ function App() {
       <Navbar />
       <main>
         <Routes>
-          {/* Redirigir la raíz a /categorias como pide el PDF */}
+          {/* Redirigir la raíz a /categorias  */}
           <Route path="/" element={<Navigate to="/categorias" replace />} />
           <Route path="/categorias" element={<CategoriasPage />} />
           <Route path="/productos" element={<ProductsPage />} />

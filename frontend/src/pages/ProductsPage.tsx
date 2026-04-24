@@ -6,18 +6,23 @@ import { Ingrediente } from '../types/ingrediente'
 import ProductoList from '../components/ProductoList'
 import ProductoModal from '../components/ProductoModal'
 
+// URLs base de la API para los diferentes recursos
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const API_URL = `${API_BASE}/productos`
 const CAT_API = `${API_BASE}/categorias`
 const ING_API = `${API_BASE}/ingredientes`
 
-// PageShell reutilizable (mismo patrón que CategoriasPage)
+/**
+ * PageShell: Contenedor reutilizable para la estructura de la pagina.
+ * Maneja el titulo, contador, boton de accion y alertas de error.
+ */
 interface PageShellProps {
   title: string; count: number; onAdd: () => void; addLabel: string
   children: React.ReactNode; error: string | null; onDismissError: () => void
 }
 const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissError }: PageShellProps) => (
   <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    {/* Banner de error */}
     {error && (
       <div role="alert" aria-live="polite" className="mb-5 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm animate-fade-in">
         <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1a.5.5 0 0 1 .437.257l7 12A.5.5 0 0 1 15 14H1a.5.5 0 0 1-.437-.743l7-12A.5.5 0 0 1 8 1zm0 4a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 1 0v-3A.5.5 0 0 0 8 5zm0 6a.75.75 0 1 0 0 1.5A.75.75 0 0 0 8 11z" /></svg>
@@ -29,6 +34,7 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
       <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-bold text-slate-800">{title}</h1>
+          {/* Contador de productos activos */}
           {count > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 tabular-nums">{count}</span>}
         </div>
         <button
@@ -44,7 +50,12 @@ const PageShell = ({ title, count, onAdd, addLabel, children, error, onDismissEr
   </main>
 )
 
+/**
+ * ProductsPage: Pagina principal para administrar los productos.
+ * Requiere cargar tambien categorias e ingredientes para el formulario de creacion/edicion.
+ */
 const ProductsPage = () => {
+  // Estados para datos de productos, categorias (para el select) e ingredientes (para los checkboxes)
   const [productos, setProductos]             = useState<Producto[]>([])
   const [categorias, setCategorias]           = useState<Categoria[]>([])
   const [ingredientes, setIngredientes]       = useState<Ingrediente[]>([])
@@ -52,6 +63,7 @@ const ProductsPage = () => {
   const [productoEditar, setProductoEditar]   = useState<Producto | null>(null)
   const [error, setError]                     = useState<string | null>(null)
 
+  // Obtener todos los productos activos
   const fetchProductos = async () => {
     try {
       const res = await fetch(`${API_URL}/`)
@@ -62,31 +74,36 @@ const ProductsPage = () => {
     }
   }
 
+  // Obtener categorias para el selector del modal
   const fetchCategorias = async () => {
     try {
       const res = await fetch(`${CAT_API}/`)
       if (!res.ok) throw new Error()
       setCategorias(await res.json())
-    } catch { /* silencioso — se muestra alerta en modal */ }
+    } catch { /* error silencioso — se maneja dentro del modal */ }
   }
 
+  // Obtener ingredientes para la seleccion multiple en el modal
   const fetchIngredientes = async () => {
     try {
       const res = await fetch(`${ING_API}/`)
       if (!res.ok) throw new Error()
       setIngredientes(await res.json())
-    } catch { /* silencioso */ }
+    } catch { /* error silencioso */ }
   }
 
+  // Carga inicial masiva de datos
   useEffect(() => {
     fetchProductos()
     fetchCategorias()
     fetchIngredientes()
   }, [])
 
+  // Maneja el envio del formulario (Create o Update)
   const handleSubmit = async (datos: ProductoForm) => {
     try {
       if (productoEditar) {
+        // Actualizar producto existente
         const res = await fetch(`${API_URL}/${productoEditar.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
@@ -97,6 +114,7 @@ const ProductsPage = () => {
         const actualizado: Producto = await res.json()
         setProductos((prev) => prev.map((p) => (p.id === actualizado.id ? actualizado : p)))
       } else {
+        // Crear nuevo producto
         const res = await fetch(`${API_URL}/`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos),
         })
@@ -113,6 +131,7 @@ const ProductsPage = () => {
     }
   }
 
+  // Baja logica de producto
   const handleEliminar = async (id: number) => {
     if (!window.confirm('¿Estás seguro de eliminar este producto?')) return
     try {
@@ -123,10 +142,12 @@ const ProductsPage = () => {
     }
   }
 
+  // Abrir modal para edicion
   const handleEditar = (p: Producto) => { setProductoEditar(p); setModalOpen(true) }
+  
+  // Abrir modal para creacion (se recargan categorias e ingredientes por si hubo cambios)
   const handleNuevo  = () => {
     setProductoEditar(null)
-    // Recargar categorías e ingredientes frescos al abrir modal
     fetchCategorias()
     fetchIngredientes()
     setModalOpen(true)
@@ -137,6 +158,8 @@ const ProductsPage = () => {
       <PageShell title="Productos" count={productos.length} onAdd={handleNuevo} addLabel="Nuevo Producto" error={error} onDismissError={() => setError(null)}>
         <ProductoList productos={productos} onEditar={handleEditar} onEliminar={handleEliminar} />
       </PageShell>
+      
+      {/* Modal de Producto que inyecta categorias e ingredientes disponibles */}
       <ProductoModal
         isOpen={modalOpen}
         productoEditar={productoEditar}
